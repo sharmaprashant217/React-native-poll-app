@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "311247515407",
+    "project_id": "pollapp-68d1b",
+    "storage_bucket": "pollapp-68d1b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:311247515407:android:2bd832da5fe9de00c3187a",
+        "android_client_info": {
+          "package_name": "com.pollapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXib3_p34GboMStbDXlAjpXicK0y18PTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
