@@ -12,39 +12,43 @@ const AddPoll = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState([
-    {value: '', key: 0},
-    {value: '', key: 1},
+    {value: '', key: 0, count: 0, totalResponses: 0},
+    {value: '', key: 1, count: 0, totalResponses: 0},
   ]);
+
   const editOption = (item, ind, txt) => {
     let tempOptions = options;
     tempOptions.map((item, index) => {
-      if (ind == index) {
+      if (ind === index) {
         item.value = txt;
       }
     });
-    let temp = [];
-    tempOptions.map(item => {
-      temp.push(item);
-    });
-    setOptions(temp);
+    setOptions([...tempOptions]);
   };
+
   const addOption = () => {
     let tempOptions = options;
-    tempOptions.push({value: '', key: options.length});
-    let temp = [];
-    tempOptions.map(item => {
-      temp.push(item);
-    });
-    setOptions(temp);
+    tempOptions.push({value: '', count: 0, key: options.length});
+    setOptions([...tempOptions]);
   };
 
   const postPoll = async () => {
     setLoading(true);
     const email = await AsyncStorage.getItem('EMAIL');
     try {
-      await firestore()
+      // Add the poll document
+      const pollRef = await firestore()
         .collection('polls')
-        .add({question, options, email: email});
+        .add({question, email, totalResponses: 0});
+
+      // Generate unique IDs for each option and add to Firestore
+      const optionsPromises = options.map(async (option, index) => {
+        const optionRef = pollRef.collection('options').doc(); // Generates unique ID
+        return optionRef.set({value: option.value, count: option.count});
+      });
+
+      await Promise.all(optionsPromises);
+
       setLoading(false);
       navigation.goBack();
     } catch (error) {
@@ -52,6 +56,7 @@ const AddPoll = () => {
       setLoading(false);
     }
   };
+
   return (
     <View style={style.container}>
       <View style={style.questionArea}>
@@ -65,9 +70,9 @@ const AddPoll = () => {
       {options.map((item, index) => {
         return (
           <OptionItem
+            key={index}
             item={item}
             onChangeText={txt => {
-              console.log(txt);
               editOption(item, index, txt);
             }}
           />
@@ -88,12 +93,7 @@ const AddPoll = () => {
         onPress={addOption}>
         Add More
       </Text>
-      <CustomButton
-        title={'Post Poll'}
-        onClick={() => {
-          postPoll();
-        }}
-      />
+      <CustomButton title={'Post Poll'} onClick={postPoll} />
       <Loader visible={loading} />
     </View>
   );

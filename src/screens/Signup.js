@@ -1,10 +1,11 @@
-import {View, Text, StyleSheet, Alert} from 'react-native';
-import React, {useState} from 'react';
+import {View, Text, StyleSheet, Alert, StatusBar} from 'react-native';
+import {useState} from 'react';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import {useNavigation} from '@react-navigation/native';
 import Loader from '../components/Loader';
 import auth from '@react-native-firebase/auth';
+import Usercreated from '../components/Usercreated';
 
 const Signup = () => {
   const navigation = useNavigation();
@@ -14,6 +15,7 @@ const Signup = () => {
   const [badPassword, setBadPassword] = useState('');
   const [isUserNew, setIsUserNew] = useState(true);
   const [loading, setLoading] = useState(false);
+
   const validate = async () => {
     if (email != '') {
       if (
@@ -24,11 +26,11 @@ const Signup = () => {
           )
       ) {
         setBadEmail('');
-        if (password != '' && password.length > 4) {
+        if (password != '' && password.length > 5) {
           setBadPassword('');
           createUser();
         } else {
-          setBadPassword('Please Enter Password');
+          setBadPassword('Password must contain at least 6 characters');
         }
       } else {
         setBadEmail('Please Enter Valid Email');
@@ -42,13 +44,12 @@ const Signup = () => {
     setLoading(true);
     auth()
       .createUserWithEmailAndPassword(email, password)
-      .then(() => {
+      .then(userCredential => {
         console.log('User account created & signed in!');
-        setLoading(false);
+        sendEmailVerification(userCredential.user);
       })
       .catch(error => {
         if (error.code === 'auth/email-already-in-use') {
-          // console.log('That email address is already in use!');
           setIsUserNew(false);
           setLoading(false);
         }
@@ -61,8 +62,28 @@ const Signup = () => {
         console.error(error);
       });
   };
+
+  const sendEmailVerification = user => {
+    user
+      .sendEmailVerification()
+      .then(() => {
+        console.log('Verification email sent!');
+        setLoading(false);
+        Alert.alert(
+          'Verify your email',
+          'A verification email has been sent to your email address. Please verify your email to complete the sign-up process.',
+          [{text: 'OK', onPress: () => navigation.navigate('Usercreated')}],
+        );
+      })
+      .catch(error => {
+        console.error('Error sending verification email: ', error);
+        setLoading(false);
+      });
+  };
+
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
       <Text style={styles.heading}>Create Account</Text>
       <CustomTextInput
         placeholder={'Enter Email'}
@@ -73,11 +94,12 @@ const Signup = () => {
       />
       {badEmail != '' && <Text style={styles.errorMsg}>{badEmail}</Text>}
       <CustomTextInput
-        placeholder={'Enter Password'}
+        placeholder={'Set Password'}
         value={password}
         onChangeText={txt => {
           setPassword(txt);
         }}
+        secureTextEntry={true}
       />
       {badPassword != '' && <Text style={styles.errorMsg}>{badPassword}</Text>}
       {isUserNew === false && (
@@ -88,11 +110,11 @@ const Signup = () => {
       <CustomButton
         title={'Sign Up'}
         onClick={() => {
-          [validate(), createUser()];
+          validate();
         }}
       />
       <Text style={styles.signup}>
-        {'Already have an Account ? '}
+        {'Already have an Account? '}
         <Text
           style={{textDecorationLine: 'underline'}}
           onPress={() => navigation.goBack()}>

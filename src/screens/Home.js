@@ -5,46 +5,91 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  StatusBar,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import PollItem from '../components/PollItem';
 import firestore from '@react-native-firebase/firestore';
 import CustomButton from '../components/CustomButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loader from '../components/Loader';
+import {CommonActions} from '@react-navigation/native';
 
 const Home = () => {
   const navigation = useNavigation();
   const [polls, setPolls] = useState([]);
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
+  const [refreshing, setRefreshing] = useState(false);
+  const route = useRoute();
+
   useEffect(() => {
     getPolls();
   }, [isFocused]);
+
+  useEffect(() => {
+    if (route.params?.justLoggedIn) {
+      refreshPoll();
+      // Clear the flag after refreshing
+      navigation.setParams({justLoggedIn: undefined});
+    }
+  }, [route.params?.justLoggedIn, refreshPoll, navigation]);
+
   const getPolls = async () => {
-    const res = await firestore().collection('polls').get();
-    console.log(res.docs);
-    let temp = [];
-    res.docs.forEach(item => {
-      temp.push({id: item.id, ...item.data()});
-    });
-    setPolls(temp);
+    setLoading(true);
+    const pollsCollection = await firestore().collection('polls').get();
+    let tempPolls = [];
+
+    for (const doc of pollsCollection.docs) {
+      let pollData = doc.data();
+      pollData.id = doc.id;
+
+      const optionsCollection = await firestore()
+        .collection('polls')
+        .doc(doc.id)
+        .collection('options')
+        .get();
+
+      pollData.options = optionsCollection.docs.map(optionDoc => ({
+        id: optionDoc.id,
+        ...optionDoc.data(),
+      }));
+
+      tempPolls.push(pollData);
+    }
+
+    setPolls(tempPolls);
+    setLoading(false);
   };
+
+  const refreshPoll = useCallback(async () => {
+    setRefreshing(true);
+    await getPolls();
+    setRefreshing(false);
+  }, [getPolls]);
+
   const logOut = async () => {
     setLoading(true);
     try {
       await AsyncStorage.clear();
       console.log('Cleared');
-      navigation.navigate('Login');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
+        }),
+      );
       setLoading(false);
     } catch (error) {
       console.log('Not Cleared:', error);
       setLoading(false);
     }
   };
+
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor={'purple'} barStyle={'light-content'} />
       <View style={styles.header}>
         <Text style={styles.logo}>Pollpro</Text>
         <TouchableOpacity
@@ -64,9 +109,10 @@ const Home = () => {
       </View>
       <FlatList
         data={polls}
-        renderItem={({item, index}) => {
-          return <PollItem item={item} />;
-        }}
+        renderItem={({item}) => (
+          <PollItem item={item} refreshPoll={refreshPoll} />
+        )}
+        keyExtractor={item => item.id}
       />
       <TouchableOpacity
         style={styles.addButton}

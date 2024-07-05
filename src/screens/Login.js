@@ -1,5 +1,5 @@
-import {View, Text, StyleSheet, Alert} from 'react-native';
-import React, {useState} from 'react';
+import {View, Text, StyleSheet, Alert, StatusBar} from 'react-native';
+import {useState, useEffect} from 'react';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import {useNavigation} from '@react-navigation/native';
@@ -17,6 +17,18 @@ const Login = () => {
   const [badPassword, setBadPassword] = useState('');
   const [isUserNew, setIsUserNew] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      setEmail('');
+      setPassword('');
+      setBadEmail('');
+      setBadPassword('');
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   const validate = async () => {
     if (email != '') {
       if (
@@ -44,11 +56,23 @@ const Login = () => {
   const loginUser = async () => {
     setLoading(true);
     try {
-      await auth().signInWithEmailAndPassword(email, password);
-      console.log('signin');
-      await AsyncStorage.setItem('EMAIL', email);
-      setLoading(false);
-      navigation.navigate('Home');
+      const userCredential = await auth().signInWithEmailAndPassword(
+        email,
+        password,
+      );
+      const user = userCredential.user;
+      if (user.emailVerified) {
+        await AsyncStorage.setItem('EMAIL', email);
+        setLoading(false);
+        navigation.navigate('Home');
+      } else {
+        setLoading(false);
+        Alert.alert(
+          'Email not verified',
+          'Please verify your email to continue.',
+          [{text: 'OK', onPress: () => auth().signOut()}],
+        );
+      }
     } catch (error) {
       setLoading(false);
       if (error.code === 'auth/user-not-found') {
@@ -66,6 +90,7 @@ const Login = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
       <Text style={styles.heading}>Login</Text>
       <View
         style={{
@@ -95,6 +120,7 @@ const Login = () => {
         onChangeText={txt => {
           setPassword(txt);
         }}
+        secureTextEntry={true}
       />
       {badPassword != '' && <Text style={styles.errorMsg}>{badPassword}</Text>}
       {isUserNew === false && (

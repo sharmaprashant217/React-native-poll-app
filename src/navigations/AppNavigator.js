@@ -7,6 +7,7 @@ import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 import Home from '../screens/Home';
 import AddPoll from '../screens/AddPoll';
+import Usercreated from '../components/Usercreated';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +35,11 @@ const AppNavigator = () => {
           name="AddPoll"
           component={AddPoll}
           options={{headerShown: true, title: 'Add New Poll'}}
+        />
+        <Stack.Screen
+          name="Usercreated"
+          component={Usercreated}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>

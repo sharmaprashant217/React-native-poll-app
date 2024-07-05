@@ -1,7 +1,14 @@
 import {View, Text, StyleSheet, TextInput} from 'react-native';
 import React from 'react';
 
-const CustomTextInput = ({placeholder, value, onChangeText, error, mt}) => {
+const CustomTextInput = ({
+  placeholder,
+  value,
+  onChangeText,
+  error,
+  mt,
+  secureTextEntry,
+}) => {
   return (
     <View style={{marginTop: mt ? mt : 20}}>
       <View style={styles.container}>
@@ -10,6 +17,7 @@ const CustomTextInput = ({placeholder, value, onChangeText, error, mt}) => {
           placeholder={placeholder}
           value={value}
           onChangeText={txt => onChangeText(txt)}
+          secureTextEntry={secureTextEntry ? secureTextEntry : false}
         />
       </View>
       {error && error !== '' ? <Text style={styles.error}>{error}</Text> : null}
