@@ -110,7 +110,7 @@ const PollItem = ({item, refreshPoll}) => {
                 paddingRight: 10,
                 flexDirection: 'row',
                 backgroundColor:
-                  selectedOption === option.id ? '#d3d3d3' : 'white',
+                  selectedOption === option.id ? '#da66fa' : 'white',
                 opacity: hasVoted && selectedOption !== option.id ? 0.5 : 1,
               }}
               disabled={hasVoted}
@@ -138,11 +138,6 @@ const PollItem = ({item, refreshPoll}) => {
       <Text style={style.totalResponses}>
         Total Responses: {item.totalResponses}
       </Text>
-      {hasVoted && (
-        <Text style={style.votedMessage}>
-          You have already voted in this poll.
-        </Text>
-      )}
     </View>
   );
 };

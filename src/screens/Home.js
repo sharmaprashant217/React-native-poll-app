@@ -6,6 +6,8 @@ import {
   FlatList,
   Image,
   StatusBar,
+  BackHandler,
+  Alert,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
@@ -26,15 +28,34 @@ const Home = () => {
 
   useEffect(() => {
     getPolls();
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackButtonPress,
+    );
+
+    return () => {
+      backHandler.remove();
+    };
   }, [isFocused]);
 
   useEffect(() => {
     if (route.params?.justLoggedIn) {
       refreshPoll();
-      // Clear the flag after refreshing
       navigation.setParams({justLoggedIn: undefined});
     }
   }, [route.params?.justLoggedIn, refreshPoll, navigation]);
+
+  const handleBackButtonPress = () => {
+    if (isFocused) {
+      Alert.alert('Exit App', 'Do you want to exit the app?', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'OK', onPress: () => BackHandler.exitApp()},
+      ]);
+      return true;
+    }
+    return false;
+  };
 
   const getPolls = async () => {
     setLoading(true);
@@ -73,7 +94,7 @@ const Home = () => {
     setLoading(true);
     try {
       await AsyncStorage.clear();
-      console.log('Cleared');
+      console.log('logout');
       navigation.dispatch(
         CommonActions.reset({
           index: 0,

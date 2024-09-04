@@ -1,4 +1,12 @@
-import {View, Text, StyleSheet, Alert, StatusBar} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  StatusBar,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native';
 import {useState, useEffect} from 'react';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
